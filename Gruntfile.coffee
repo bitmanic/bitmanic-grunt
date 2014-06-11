@@ -1,111 +1,176 @@
+"use strict"
+
 module.exports = (grunt) ->
 
-  # Config settings
-  $c =
-
-    # Set source and build directories
-    dir:
-      source: 'source'
-      build: 'build'
-
-    # Set asset directories
+  # -------------------------------------------------------------------------- #
+  # Path settings
+  # -------------------------------------------------------------------------- #
+  path =
+    src: 'source'
+    serv: 'server'
+    dist: 'build'
     assets:
-      css:  'assets/css'
-      fonts: 'assets/fonts'
-      img:  'assets/img'
-      js:   'assets/js'
+      css:    'assets/css'
+      fonts:  'assets/fonts'
+      img:    'assets/img'
+      js:     'assets/js'
 
-  # Project configuration.
+  # -------------------------------------------------------------------------- #
+  # Project configuration
+  # -------------------------------------------------------------------------- #
   grunt.initConfig
 
+    # Read in the package.json file data
+    # ------------------------------------------------------------------------ #
     pkg: grunt.file.readJSON('package.json')
 
-    banner:
-      "/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - " +
-      "<%= grunt.template.today(\"yyyy-mm-dd\") %>\n" +
-      "<%= pkg.homepage ? \"* \" + pkg.homepage + \"\\n\" : \"\" %>" +
-      "* Copyright (c) <%= grunt.template.today(\"yyyy\") %> <%= pkg.author.name %>;" +
-      " Licensed <%= _.pluck(pkg.licenses, \"type\").join(\", \") %> */"
-
-
-    # Clean (Empties build directories)
-    clean:
-      build:
-        src: [
-          $c.dir.build + '/' + $c.assets.css
-          $c.dir.build + '/' + $c.assets.fonts
-          $c.dir.build + '/' + $c.assets.js
-          $c.dir.build + '/' + $c.assets.img
-        ]
-
-    # Coffeescript (Compile Coffeescript into JS)
-    coffee:
+    # Autoprefixer
+    # ------------------------------------------------------------------------ #
+    autoprefixer:
       build:
         options:
-          bare: true
+          map: true
+          browsers: [
+            'last 2 version'
+            'ie 9'
+          ]
+        src: path.dist + '/' + path.assets.css
+
+    # Clean (Empties build directories)
+    # ------------------------------------------------------------------------ #
+    clean:
+      server:
+        css:
+          src: path.serv + '/' + path.assets.css
+        js:
+          src: path.serv + '/' + path.assets.js
+      build:
+        src: path.dist + '/'
+
+    # Coffeescript (Compile Coffeescript into JS)
+    # ------------------------------------------------------------------------ #
+    coffee:
+
+      options:
+        bare: true
+        sourceMap: true
+
+      server:
         files: [
           expand: true
-          cwd: $c.dir.source + '/' + $c.assets.js
-          src: [
-            '**/*.coffee'
-            '**/*.js'
-          ]
-          dest: $c.dir.build + '/' + $c.assets.js
+          cwd: path.src + '/' + path.assets.js
+          src: ['**/*.coffee']
+          dest: path.serv + '/' + path.assets.js
           ext: '.js'
         ]
 
+      build:
+        files: [
+          expand: true
+          cwd: path.src + '/' + path.assets.js
+          src: ['**/*.coffee']
+          dest: path.dist + '/' + path.assets.js
+          ext: '.js'
+        ]
+
+    # Coffeelint
+    # ------------------------------------------------------------------------ #
+    coffeelint:
+      app: [
+        'Gruntfile.coffee'
+        path.src + '/' + path.assets.js + '/*.coffee'
+      ],
+      options:
+        no_trailing_whitespace:
+          level: "error"
+
+
+
     # Connect (Create a local server at http://localhost:4000)
+    # ------------------------------------------------------------------------ #
     connect:
       server:
         options:
-          base: './' + $c.dir.build + '/'
+          base: './' + path.serv + '/'
           port: '4000'
           host: '*'
+          livereload: true
 
     # HTML minification
+    # ------------------------------------------------------------------------ #
     htmlmin:
       build:
         options:
           removeComments: true
           collapseWhitespace: true
         files: [
-          expand: true              # Enable dynamic expansion.
-          cwd: $c.dir.source + '/'  # Src matches are relative to this path.
-          src: ['**/*.html']        # Actual pattern(s) to match.
-          dest: $c.dir.build + '/'  # Destination path prefix.
-          ext: '.html'              # Dest filepaths will have this extension.
+          cwd: path.src + '/'
+          src: '**/*.html'
+          dest: path.dist + '/'
+          expand: true
+          ext: '.html'
         ]
 
-    # JSHint
-    jshint:
-      files: ['gruntfile.js', 'source/**/*.js']
-      options:
-        globals:
-          jQuery: true
-          console: true
-          module: true
-
-    # Sass (Comple Sass files into CSS)
-    sass:
+    # Jade templating
+    # ------------------------------------------------------------------------ #
+    jade:
+      server:
+        options:
+          debug: false
+        files: [
+          cwd: path.src + '/'
+          src: [
+            '**/*.jade'
+            '!**/_*.jade'
+            '!partials/*.jade'
+          ]
+          dest: path.serv + '/'
+          expand: true
+          ext: ".html"
+        ]
       build:
         options:
-          sourcemap: true
-          style: 'compressed'
+          debug: false
+        files: [
+          cwd: path.src + '/'
+          src: "**/*.jade"
+          dest: path.dist + '/'
+          expand: true
+          ext: ".html"
+        ]
+
+    # Sass (Comple Sass files into CSS)
+    # ------------------------------------------------------------------------ #
+    sass:
+
+      options:
+        sourcemap: true
+        style: 'compressed'
+        compass: true
+        loadPath: ['bower_components']
+
+      server:
         files: [
           expand: true
-          cwd: $c.dir.source + '/' + $c.assets.css
-          src: [
-            '**/*.sass'
-            '**/*.scss'
-          ]
-          dest: $c.dir.build + '/' + $c.assets.css
+          cwd: path.src + '/' + path.assets.css
+          src: ['**/*.sass', '**/*.scss']
+          dest: path.serv + '/' + path.assets.css
+          ext: '.css'
+        ]
+
+      build:
+        files: [
+          expand: true
+          cwd: path.src + '/' + path.assets.css
+          src: ['**/*.sass', '**/*.scss']
+          dest: path.dist + '/' + path.assets.css
           ext: '.css'
         ]
 
     # Uglify (Compress JS files)
+    # ------------------------------------------------------------------------ #
     uglify:
       options:
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
         compress:
           drop_console: true
         preserveComments: false
@@ -114,70 +179,92 @@ module.exports = (grunt) ->
         scripts:
           files: [
             expand: true
-            cwd: $c.dir.source + '/' + $c.assets.js
+            cwd: path.src + '/' + path.assets.js
             src: '/**/*.js'
-            dest: $c.dir.build + '/' + $c.assets.js + '/scripts.min.js'
+            dest: path.dist + '/' + path.assets.js + '/scripts.min.js'
           ]
 
     # Watch (Things to do when the local server is runnning)
+    # ------------------------------------------------------------------------ #
     watch:
 
       # Recompile CSS when a Sass file is changed
-      css:
+      sass:
         files: [
-          $c.dir.source + '/' + $c.assets.css + '/**/*.sass'
-          $c.dir.source + '/' + $c.assets.css + '/**/*.scss'
+          path.src + '/' + path.assets.css + '/**/*.sass'
+          path.src + '/' + path.assets.css + '/**/*.scss'
         ]
-        tasks: [
-          'sass'
-        ]
+        tasks: ['clean:server:css', 'sass:server']
 
-      # Minify HTML files
-      html:
-        files: [$c.dir.source + '/' + $c.assets.js + '/**/*.html']
-        tasks: [
-          'htmlmin'
-        ]
+      # Trigger LiveReload when a CSS file is changed
+      css:
+        files: [path.serv + '/' + path.assets.css + '/**/*.css']
+        options:
+          livereload: true
 
       # Recompile JS when a Coffeescript file is changed
-      js:
-        files: [$c.dir.source + '/' + $c.assets.js + '/**/*.coffee']
-        tasks: [
-          'coffee'
-          'jshint'
-        ]
+      coffee:
+        files: [path.src + '/' + path.assets.js + '/**/*.coffee']
+        tasks: ['coffeelint', 'clean:server:js', 'coffee:server']
+        options:
+          livereload: true
 
-  # Load the desired plugins
+      # Recompile HTML when a Jade file is changed
+      jade:
+        files: [path.src + '/' + '/**/*.jade']
+        tasks: ['jade:server']
+        options:
+          livereload: true
+
+      # Trigger LiveReload when an HTML file is changed
+      html:
+        files: [path.serv + '/**/*.html']
+        options:
+          livereload: true
+
+  # -------------------------------------------------------------------------- #
+  # Load all Grunt tasks
+  # -------------------------------------------------------------------------- #
+  grunt.loadNpmTasks 'grunt-autoprefixer'
+  grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-clean'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-connect'
   grunt.loadNpmTasks 'grunt-contrib-htmlmin'
-  grunt.loadNpmTasks 'grunt-contrib-jshint'
+  grunt.loadNpmTasks 'grunt-contrib-jade'
   grunt.loadNpmTasks 'grunt-contrib-sass'
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-contrib-watch'
 
-
+  # -------------------------------------------------------------------------- #
   # Build tasks
+  # -------------------------------------------------------------------------- #
   grunt.registerTask 'build', [
-    'clean'
-    'sass'
+    'clean:build'
+    'jade:build'
     'htmlmin'
-    'coffee'
+    'sass:build'
+    'autoprefixer'
+    'coffee:build'
     'uglify'
   ]
 
+  # -------------------------------------------------------------------------- #
   # Server tasks
+  # -------------------------------------------------------------------------- #
   grunt.registerTask 'server', [
+    'clean:server'
+    'jade:server'
+    'sass:server'
+    'coffeelint'
+    'coffee:server'
     'connect'
     'watch'
   ]
 
+  # -------------------------------------------------------------------------- #
   # Default tasks
-  grunt.registerTask 'default', [
-    'build'
-    'connect'
-    'watch'
-  ]
+  # -------------------------------------------------------------------------- #
+  grunt.registerTask 'default', ['server']
 
   return
