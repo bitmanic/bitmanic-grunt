@@ -9,6 +9,7 @@ module.exports = (grunt) ->
     src: 'source'
     serv: 'server'
     dist: 'build'
+    data: 'data'
     assets:
       css:    'assets/css'
       fonts:  'assets/fonts'
@@ -24,7 +25,43 @@ module.exports = (grunt) ->
     # ------------------------------------------------------------------------ #
     pkg: grunt.file.readJSON('package.json')
 
-    # Autoprefixer
+    # Assemble (Static site generator)
+    # ------------------------------------------------------------------------ #
+    assemble:
+
+      options:
+        assets: path.src + '/assets'
+        plugins: [
+          'permalinks'
+        ]
+        partials: path.src + '/partials/**/*.html'
+        layoutdir: path.src + '/layouts'
+        layout: 'default.html'
+        data: path.data + '/*.{json,yml,yaml}'
+
+      server:
+        options:
+          assets: path.serv + '/assets'
+        files: [
+          cwd: path.src + '/'
+          src: ['**/*.html', '!layouts/*.html', '!partials/*.html']
+          dest: path.serv + '/'
+          expand: true
+          ext: ".html"
+        ]
+
+      build:
+        options:
+          assets: path.dist + '/assets'
+        files: [
+          cwd: path.src + '/'
+          src: ['**/*.html', '!layouts/*.html', '!partials/*.html']
+          dest: path.dist + '/'
+          expand: true
+          ext: ".html"
+        ]
+
+    # Autoprefixer (Adds browser prefixes to CSS)
     # ------------------------------------------------------------------------ #
     autoprefixer:
       build:
@@ -59,7 +96,7 @@ module.exports = (grunt) ->
         files: [
           expand: true
           cwd: path.src + '/' + path.assets.js
-          src: ['**/*.coffee']
+          src: ['**/*.coffee', '!**/_*.coffee']
           dest: path.serv + '/' + path.assets.js
           ext: '.js'
         ]
@@ -68,7 +105,7 @@ module.exports = (grunt) ->
         files: [
           expand: true
           cwd: path.src + '/' + path.assets.js
-          src: ['**/*.coffee']
+          src: ['**/*.coffee', '!**/_*.coffee']
           dest: path.dist + '/' + path.assets.js
           ext: '.js'
         ]
@@ -83,8 +120,6 @@ module.exports = (grunt) ->
       options:
         no_trailing_whitespace:
           level: "error"
-
-
 
     # Connect (Create a local server at http://localhost:4000)
     # ------------------------------------------------------------------------ #
@@ -111,35 +146,6 @@ module.exports = (grunt) ->
           ext: '.html'
         ]
 
-    # Jade templating
-    # ------------------------------------------------------------------------ #
-    jade:
-      server:
-        options:
-          debug: false
-        files: [
-          cwd: path.src + '/'
-          src: [
-            '**/*.jade'
-            '!**/_*.jade'
-            '!layouts/*.jade'
-            '!partials/*.jade'
-          ]
-          dest: path.serv + '/'
-          expand: true
-          ext: ".html"
-        ]
-      build:
-        options:
-          debug: false
-        files: [
-          cwd: path.src + '/'
-          src: "**/*.jade"
-          dest: path.dist + '/'
-          expand: true
-          ext: ".html"
-        ]
-
     # Sass (Comple Sass files into CSS)
     # ------------------------------------------------------------------------ #
     sass:
@@ -154,7 +160,7 @@ module.exports = (grunt) ->
         files: [
           expand: true
           cwd: path.src + '/' + path.assets.css
-          src: ['**/*.sass', '**/*.scss']
+          src: ['**/*.{sass,scss}']
           dest: path.serv + '/' + path.assets.css
           ext: '.css'
         ]
@@ -163,7 +169,7 @@ module.exports = (grunt) ->
         files: [
           expand: true
           cwd: path.src + '/' + path.assets.css
-          src: ['**/*.sass', '**/*.scss']
+          src: ['**/*.{sass,scss}']
           dest: path.dist + '/' + path.assets.css
           ext: '.css'
         ]
@@ -189,17 +195,10 @@ module.exports = (grunt) ->
     # ------------------------------------------------------------------------ #
     watch:
 
-      # Recompile CSS when a Sass file is changed
-      sass:
-        files: [
-          path.src + '/' + path.assets.css + '/**/*.sass'
-          path.src + '/' + path.assets.css + '/**/*.scss'
-        ]
-        tasks: ['clean:server:css', 'sass:server']
-
-      # Trigger LiveReload when a CSS file is changed
-      css:
-        files: [path.serv + '/' + path.assets.css + '/**/*.css']
+      # Recompile HTML when an Assemble template is changed
+      assemble:
+        files: [path.src + '/' + '/**/*.html']
+        tasks: ['assemble:server']
         options:
           livereload: true
 
@@ -210,10 +209,9 @@ module.exports = (grunt) ->
         options:
           livereload: true
 
-      # Recompile HTML when a Jade file is changed
-      jade:
-        files: [path.src + '/' + '/**/*.jade']
-        tasks: ['jade:server']
+      # Trigger LiveReload when a CSS file is changed
+      css:
+        files: [path.serv + '/' + path.assets.css + '/**/*.css']
         options:
           livereload: true
 
@@ -223,16 +221,21 @@ module.exports = (grunt) ->
         options:
           livereload: true
 
+      # Recompile CSS when a Sass file is changed
+      sass:
+        files: [path.src + '/' + path.assets.css + '/**/*.{sass,scss}']
+        tasks: ['clean:server:css', 'sass:server']
+
   # -------------------------------------------------------------------------- #
   # Load all Grunt tasks
   # -------------------------------------------------------------------------- #
+  grunt.loadNpmTasks 'assemble'
   grunt.loadNpmTasks 'grunt-autoprefixer'
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-clean'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-connect'
   grunt.loadNpmTasks 'grunt-contrib-htmlmin'
-  grunt.loadNpmTasks 'grunt-contrib-jade'
   grunt.loadNpmTasks 'grunt-contrib-sass'
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-contrib-watch'
@@ -242,7 +245,7 @@ module.exports = (grunt) ->
   # -------------------------------------------------------------------------- #
   grunt.registerTask 'build', [
     'clean:build'
-    'jade:build'
+    'assemble:build'
     'htmlmin'
     'sass:build'
     'autoprefixer'
@@ -255,7 +258,7 @@ module.exports = (grunt) ->
   # -------------------------------------------------------------------------- #
   grunt.registerTask 'server', [
     'clean:server'
-    'jade:server'
+    'assemble:server'
     'sass:server'
     'coffeelint'
     'coffee:server'
