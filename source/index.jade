@@ -1,10 +1,7 @@
-doctype html
-html
-  include partials/header
+- var title = "Welcome"
 
-  body
+include layouts/layout
++layout()
 
-    .container
-      h1 Grunt Boilerplate
-
-    script(async='true', src='/assets/js/scripts.js')
+  .container
+    h1 Grunt Boilerplate

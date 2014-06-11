@@ -122,6 +122,7 @@ module.exports = (grunt) ->
           src: [
             '**/*.jade'
             '!**/_*.jade'
+            '!layouts/*.jade'
             '!partials/*.jade'
           ]
           dest: path.serv + '/'
