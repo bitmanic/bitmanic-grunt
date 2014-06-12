@@ -2,7 +2,7 @@
   "name": "bitmanic-grunt",
   "title": "Bitmanic Grunt Boilerplate",
   "description": "A Grunt boilerplate that includes a static site generator and build script.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "author": {
     "name": "Ray Brown",
     "url": "http://bitmanic.com/"
