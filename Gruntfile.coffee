@@ -7,12 +7,15 @@ module.exports = (grunt) ->
   # -------------------------------------------------------------------------- #
   grunt.initConfig
 
+    # Read in the package.json file data
+    # ------------------------------------------------------------------------ #
+    pkg: grunt.file.readJSON('package.json')
+
     # Path settings
     # ------------------------------------------------------------------------ #
-
     path:
 
-      # Locations
+      # Base locations
       loc:
         dev:    'source'
         server: 'server'
@@ -21,20 +24,17 @@ module.exports = (grunt) ->
       # Assets
       assets:
         base:   'assets'
-        css:    'assets/css'
-        fonts:  'assets/fonts'
-        img:    'assets/img'
-        js:     'assets/js'
+        css:    '<%= path.assets.base %>/css'
+        fonts:  '<%= path.assets.base %>/fonts'
+        img:    '<%= path.assets.base %>/img'
+        js:     '<%= path.assets.base %>/js'
 
       # Bower components
       bower:
-        bootstrap: 'bower_components/bootstrap-sass-official/vendor/assets'
-        jquery:    'bower_components/jquery/dist/'
-        modernizr: 'bower_components/modernizr'
-
-    # Read in the package.json file data
-    # ------------------------------------------------------------------------ #
-    pkg: grunt.file.readJSON('package.json')
+        base: 'bower_components'
+        twbs: '<%= path.bower.base %>/bootstrap-sass-official/vendor/assets'
+        jquery: '<%= path.bower.base %>/jquery/dist/'
+        modernizr: '<%= path.bower.base %>/modernizr'
 
     # Assemble (Static site generator)
     # ------------------------------------------------------------------------ #
@@ -145,43 +145,33 @@ module.exports = (grunt) ->
     copy:
 
       server:
+        vend: '<%= path.loc.server %>/<%= path.assets.js %>/vendor/'
         files: [
 
-          # jQuery
+          # Vendor javascript
           {
-            expand: true,
-            flatten: true
-            src: '<%= path.bower.jquery %>/jquery.min.js'
-            dest: '<%= path.loc.server %>/<%= path.assets.js %>/vendor/'
-          }
-
-          # Modernizr
-          {
-            expand: true,
-            flatten: true
-            src: '<%= path.bower.modernizr %>/modernizr.js'
-            dest: '<%= path.loc.server %>/<%= path.assets.js %>/vendor/'
+            src: [
+              '<%= path.bower.jquery %>/jquery.min.js'
+              '<%= path.bower.modernizr %>/modernizr.js'
+              '<%= path.bower.twbs %>/javascripts/bootstrap.js'
+            ]
+            dest: '<%= copy.server.vend %>', expand: true, flatten: true
           }
 
         ]
 
       build:
+        vend: '<%= path.loc.build %>/<%= path.assets.js %>/vendor/'
         files: [
 
-          # jQuery
+          # Vendor javascript
           {
-            expand: true,
-            flatten: true
-            src: '<%= path.bower.jquery %>/jquery.min.js'
-            dest: '<%= path.loc.build %>/<%= path.assets.js %>/vendor/'
-          }
-
-          # Modernizr
-          {
-            expand: true,
-            flatten: true
-            src: '<%= path.bower.modernizr %>/modernizr.js'
-            dest: '<%= path.loc.build %>/<%= path.assets.js %>/vendor/'
+            src: [
+              '<%= path.bower.jquery %>/jquery.min.js'
+              '<%= path.bower.modernizr %>/modernizr.js'
+              '<%= path.bower.twbs %>/javascripts/bootstrap.js'
+            ]
+            dest: '<%= copy.build.vend %>', expand: true, flatten: true
           }
 
         ]
