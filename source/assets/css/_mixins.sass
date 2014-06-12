@@ -1,0 +1,52 @@
+// List reset
+=list-reset($margin: 0, $padding: 0, $clearfix: true)
+  list-style: none
+  @if $margin
+    margin: $margin
+  @if $padding
+    padding: $padding
+  @if $clearfix
+    +pie-clearfix
+
+// Media query mixin
+// ---
+// Usage:
+// .selector
+//   // Default styles
+//   +media(md, lg)
+//     // Styles for medium- and large-width devices
+=media($query_list)
+
+  @each $query in $query_list
+
+    @if $query == xxs
+      @media (max-width: 480px)
+        @content
+
+    @if $query == xs
+      @media (max-width: 767px)
+        @content
+
+    @else if $query == sm
+      @media (min-width: 768px) and (max-width: 991px)
+        @content
+
+    @else if $query == md
+      @media (min-width: 992px) and (max-width: 1199px)
+        @content
+
+    @else if $query == lg
+      @media (min-width: 1200px)
+        @content
+
+// Positioning helper
+=pos($left: false, $top: false, $right: false, $bottom: false, $position: absolute)
+  @if $bottom
+    bottom: $bottom
+  @if $left
+    left: $left
+  position: $position
+  @if $right
+    right: $right
+  @if $top
+    top: $top
