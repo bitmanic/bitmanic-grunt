@@ -3,23 +3,34 @@
 module.exports = (grunt) ->
 
   # -------------------------------------------------------------------------- #
-  # Path settings
-  # -------------------------------------------------------------------------- #
-  path =
-    src: 'source'
-    serv: 'server'
-    dist: 'build'
-    data: 'data'
-    assets:
-      css:    'assets/css'
-      fonts:  'assets/fonts'
-      img:    'assets/img'
-      js:     'assets/js'
-
-  # -------------------------------------------------------------------------- #
   # Project configuration
   # -------------------------------------------------------------------------- #
   grunt.initConfig
+
+    # Path settings
+    # ------------------------------------------------------------------------ #
+
+    path:
+
+      # Locations
+      loc:
+        dev:    'source'
+        server: 'server'
+        build:  'build'
+
+      # Assets
+      assets:
+        base:   'assets'
+        css:    'assets/css'
+        fonts:  'assets/fonts'
+        img:    'assets/img'
+        js:     'assets/js'
+
+      # Bower components
+      bower:
+        bootstrap: 'bower_components/bootstrap-sass-official/vendor/assets'
+        jquery:    'bower_components/jquery/dist/'
+        modernizr: 'bower_components/modernizr'
 
     # Read in the package.json file data
     # ------------------------------------------------------------------------ #
@@ -30,33 +41,31 @@ module.exports = (grunt) ->
     assemble:
 
       options:
-        assets: path.src + '/assets'
-        plugins: [
-          'permalinks'
-        ]
-        partials: path.src + '/partials/**/*.html'
-        layoutdir: path.src + '/layouts'
+        plugins: ['permalinks']
+        partials: '<%= path.loc.dev %>/partials/**/*.html'
+        layoutdir: '<%= path.loc.dev %>/layouts'
         layout: 'default.html'
-        data: path.data + '/*.{json,yml,yaml}'
+        data: 'data/*.{json,yml,yaml}'
+        now: Date.now()
 
       server:
         options:
-          assets: path.serv + '/assets'
+          assets: '<%= path.loc.server %>/<%= path.assets.base %>'
         files: [
-          cwd: path.src + '/'
-          src: ['**/*.html', '!layouts/*.html', '!partials/*.html']
-          dest: path.serv + '/'
+          cwd: '<%= path.loc.dev %>/'
+          src: ['**/*.html', '!{layouts,partials}/*.html']
+          dest: '<%= path.loc.server %>/'
           expand: true
           ext: ".html"
         ]
 
       build:
         options:
-          assets: path.dist + '/assets'
+          assets: '<%= path.loc.build %>/<%= path.assets.base %>'
         files: [
-          cwd: path.src + '/'
-          src: ['**/*.html', '!layouts/*.html', '!partials/*.html']
-          dest: path.dist + '/'
+          cwd: '<%= path.loc.dev %>/'
+          src: ['**/*.html', '!{layouts,partials}/*.html']
+          dest: '<%= path.loc.build %>/'
           expand: true
           ext: ".html"
         ]
@@ -71,18 +80,18 @@ module.exports = (grunt) ->
             'last 2 version'
             'ie 9'
           ]
-        src: path.dist + '/' + path.assets.css
+        src: '<%= path.loc.build %>/<%= path.assets.css %>'
 
     # Clean (Empties build directories)
     # ------------------------------------------------------------------------ #
     clean:
       server:
         css:
-          src: path.serv + '/' + path.assets.css
+          src: '<%= path.loc.server %>/<%= path.assets.css %>'
         js:
-          src: path.serv + '/' + path.assets.js
+          src: '<%= path.loc.server %>/<%= path.assets.js %>'
       build:
-        src: path.dist + '/'
+        src: '<%= path.loc.build %>/'
 
     # Coffeescript (Compile Coffeescript into JS)
     # ------------------------------------------------------------------------ #
@@ -95,18 +104,18 @@ module.exports = (grunt) ->
       server:
         files: [
           expand: true
-          cwd: path.src + '/' + path.assets.js
-          src: ['**/*.coffee', '!**/_*.coffee']
-          dest: path.serv + '/' + path.assets.js
+          cwd: '<%= path.loc.dev %>/<%= path.assets.js %>'
+          src: ['**/*.coffee']
+          dest: '<%= path.loc.server %>/<%= path.assets.js %>'
           ext: '.js'
         ]
 
       build:
         files: [
           expand: true
-          cwd: path.src + '/' + path.assets.js
-          src: ['**/*.coffee', '!**/_*.coffee']
-          dest: path.dist + '/' + path.assets.js
+          cwd: '<%= path.loc.dev %>/<%= path.assets.js %>'
+          src: ['**/*.coffee']
+          dest: '<%= path.loc.build %>/<%= path.assets.js %>'
           ext: '.js'
         ]
 
@@ -115,7 +124,7 @@ module.exports = (grunt) ->
     coffeelint:
       app: [
         'Gruntfile.coffee'
-        path.src + '/' + path.assets.js + '/*.coffee'
+        '<%= path.loc.dev %>/<%= path.assets.js %>/*.coffee'
       ],
       options:
         no_trailing_whitespace:
@@ -126,10 +135,56 @@ module.exports = (grunt) ->
     connect:
       server:
         options:
-          base: './' + path.serv + '/'
+          base: '<%= path.loc.server %>'
           port: '4000'
           host: '*'
           livereload: true
+
+    # Copy (copy vendor files into the project)
+    # ------------------------------------------------------------------------ #
+    copy:
+
+      server:
+        files: [
+
+          # jQuery
+          {
+            expand: true,
+            flatten: true
+            src: '<%= path.bower.jquery %>/jquery.min.js'
+            dest: '<%= path.loc.server %>/<%= path.assets.js %>/vendor/'
+          }
+
+          # Modernizr
+          {
+            expand: true,
+            flatten: true
+            src: '<%= path.bower.modernizr %>/modernizr.js'
+            dest: '<%= path.loc.server %>/<%= path.assets.js %>/vendor/'
+          }
+
+        ]
+
+      build:
+        files: [
+
+          # jQuery
+          {
+            expand: true,
+            flatten: true
+            src: '<%= path.bower.jquery %>/jquery.min.js'
+            dest: '<%= path.loc.build %>/<%= path.assets.js %>/vendor/'
+          }
+
+          # Modernizr
+          {
+            expand: true,
+            flatten: true
+            src: '<%= path.bower.modernizr %>/modernizr.js'
+            dest: '<%= path.loc.build %>/<%= path.assets.js %>/vendor/'
+          }
+
+        ]
 
     # HTML minification
     # ------------------------------------------------------------------------ #
@@ -139,9 +194,9 @@ module.exports = (grunt) ->
           removeComments: true
           collapseWhitespace: true
         files: [
-          cwd: path.src + '/'
+          cwd: '<%= path.loc.dev %>/'
           src: '**/*.html'
-          dest: path.dist + '/'
+          dest: '<%= path.loc.build %>/'
           expand: true
           ext: '.html'
         ]
@@ -159,18 +214,18 @@ module.exports = (grunt) ->
       server:
         files: [
           expand: true
-          cwd: path.src + '/' + path.assets.css
+          cwd: '<%= path.loc.dev %>/<%= path.assets.css %>'
           src: ['**/*.{sass,scss}']
-          dest: path.serv + '/' + path.assets.css
+          dest: '<%= path.loc.server %>/<%= path.assets.css %>'
           ext: '.css'
         ]
 
       build:
         files: [
           expand: true
-          cwd: path.src + '/' + path.assets.css
+          cwd: '<%= path.loc.dev %>/<%= path.assets.css %>'
           src: ['**/*.{sass,scss}']
-          dest: path.dist + '/' + path.assets.css
+          dest: '<%= path.loc.build %>/<%= path.assets.css %>'
           ext: '.css'
         ]
 
@@ -186,9 +241,9 @@ module.exports = (grunt) ->
         scripts:
           files: [
             expand: true
-            cwd: path.src + '/' + path.assets.js
+            cwd: '<%= path.loc.dev %>/<%= path.assets.js %>'
             src: '/**/*.js'
-            dest: path.dist + '/' + path.assets.js + '/scripts.min.js'
+            dest: '<%= path.loc.build %>/<%= path.assets.js %>/scripts.min.js'
           ]
 
     # Watch (Things to do when the local server is runnning)
@@ -197,33 +252,33 @@ module.exports = (grunt) ->
 
       # Recompile HTML when an Assemble template is changed
       assemble:
-        files: [path.src + '/' + '/**/*.html']
+        files: ['<%= path.loc.dev %>/' + '/**/*.html']
         tasks: ['assemble:server']
         options:
           livereload: true
 
       # Recompile JS when a Coffeescript file is changed
       coffee:
-        files: [path.src + '/' + path.assets.js + '/**/*.coffee']
+        files: ['<%= path.loc.dev %>/<%= path.assets.js %>/**/*.coffee']
         tasks: ['coffeelint', 'clean:server:js', 'coffee:server']
         options:
           livereload: true
 
       # Trigger LiveReload when a CSS file is changed
       css:
-        files: [path.serv + '/' + path.assets.css + '/**/*.css']
+        files: ['<%= path.loc.server %>/<%= path.assets.css %>/**/*.css']
         options:
           livereload: true
 
       # Trigger LiveReload when an HTML file is changed
       html:
-        files: [path.serv + '/**/*.html']
+        files: ['<%= path.loc.server %>/**/*.html']
         options:
           livereload: true
 
       # Recompile CSS when a Sass file is changed
       sass:
-        files: [path.src + '/' + path.assets.css + '/**/*.{sass,scss}']
+        files: ['<%= path.loc.dev %>/<%= path.assets.css %>/**/*.{sass,scss}']
         tasks: ['clean:server:css', 'sass:server']
 
   # -------------------------------------------------------------------------- #
@@ -235,6 +290,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-clean'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-connect'
+  grunt.loadNpmTasks 'grunt-contrib-copy'
   grunt.loadNpmTasks 'grunt-contrib-htmlmin'
   grunt.loadNpmTasks 'grunt-contrib-sass'
   grunt.loadNpmTasks 'grunt-contrib-uglify'
@@ -245,6 +301,7 @@ module.exports = (grunt) ->
   # -------------------------------------------------------------------------- #
   grunt.registerTask 'build', [
     'clean:build'
+    'copy:build'
     'assemble:build'
     'htmlmin'
     'sass:build'
@@ -258,6 +315,7 @@ module.exports = (grunt) ->
   # -------------------------------------------------------------------------- #
   grunt.registerTask 'server', [
     'clean:server'
+    'copy:server'
     'assemble:server'
     'sass:server'
     'coffeelint'

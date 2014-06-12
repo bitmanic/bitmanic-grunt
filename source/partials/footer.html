@@ -3,13 +3,14 @@
 
     <hr />
 
-    <p class="copyright">&copy;2014 {{site.name}}. All rights reserved.</p>
+    <p class="copyright">&copy;{{formatDate now "%Y"}} {{site.name}}. All rights reserved.</p>
 
   </div>
 </footer>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script>window.jQuery || document.write('<script src="{{assets}}/js/jquery.js"><\/script>')</script>
+<script>window.jQuery || document.write('<script src="{{assets}}/js/vendor/jquery.min.js"><\/script>')</script>
+<script src="{{assets}}/js/_namespace.js"></script>
 <script src="{{assets}}/js/scripts.js"></script>
 
 <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->

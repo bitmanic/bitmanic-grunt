@@ -33,6 +33,9 @@
     "grunt-autoprefixer": "~0.7.5",
     "grunt-contrib-compass": "~0.8.0",
     "grunt-contrib-jade": "~0.12.0",
-    "assemble": "~0.4.37"
+    "assemble": "~0.4.37",
+    "grunt-contrib-copy": "~0.5.0",
+    "grunt-contrib-concat": "~0.4.0",
+    "grunt-includes": "~0.4.4"
   }
 }
